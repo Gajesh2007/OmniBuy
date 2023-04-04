@@ -29,11 +29,12 @@ contract Destination is NonblockingLzApp {
         address sender,
         bytes calldata commands, 
         bytes[] calldata inputs, 
-        address _nft
+        address _nft,
+				uint256 _tokenId
     ) public payable {
         try universalRouter.execute{value: msg.value}(commands, inputs, block.timestamp) {
             // Transfer NFT to sender
-            IERC721(_nft).safeTransferFrom(address(this), sender, 0);
+            IERC721(_nft).safeTransferFrom(address(this), sender, _tokenId);
         } catch {
             payable(sender).transfer(msg.value);
         }
@@ -63,10 +64,11 @@ contract Destination is NonblockingLzApp {
             address sender, 
             bytes memory commands, 
             bytes[] memory inputs, 
-            address _nft
-        ) = abi.decode(_payload, (address, bytes, bytes[], address));
+            address _nft,
+	          uint256 _tokenId
+        ) = abi.decode(_payload, (address, bytes, bytes[], address, uint256));
 
-        this.executeTrade(sender, commands, inputs, _nft);
+        this.executeTrade(sender, commands, inputs, _nft, _tokenId);
     }    
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
