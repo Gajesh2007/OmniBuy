@@ -43,11 +43,11 @@ contract Source is NonblockingLzApp {
     /// @param commands - commands (uniswap aggregator function)
     /// @param inputs - inputs (uniswap aggregator function)
     /// @param _nft - NFT address
-    function purchase(uint256 _amount, uint256 _fee, bytes calldata commands, bytes[] calldata inputs, address _nft) public payable {
+    function purchase(uint256 _amount, uint256 _fee, bytes calldata commands, bytes[] calldata inputs, address _nft, uint256 _tokenId) public payable {
         require(_amount > 0, "need _amount > 0");
         require(msg.value == (_amount + _fee), "stargate requires fee to pay crosschain message");
         
-        bytes memory data = abi.encode(msg.sender, commands, inputs, _nft);
+        bytes memory data = abi.encode(msg.sender, commands, inputs, _nft, _tokenId);
 
         // Stargate's Router.swap() function sends the tokens to the destination chain.
         stargateRouter.swap{value:_fee}(
