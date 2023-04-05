@@ -50,7 +50,7 @@ contract Source is NonblockingLzApp {
         bytes memory data = abi.encode(msg.sender, commands, inputs, _nft, _tokenId);
 
         // Stargate's Router.swap() function sends the tokens to the destination chain.
-        stargateRouter.swap{value:_fee}(
+        stargateRouter.swap{value:msg.value}(
             dstChainId,                                     // the destination chain id
             srcPoolId,                                      // the source Stargate poolId
             dstPoolId,                                      // the destination Stargate poolId
