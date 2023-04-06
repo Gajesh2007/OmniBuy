@@ -56,8 +56,8 @@ contract Source is NonblockingLzApp {
         require(msg.value == (_amount + _fee), "stargate requires fee to pay crosschain message");
 
         // wrap the ETH into WETH
-        IStargateEthVault(stargateEthVault).deposit{value: _amountLD}();
-        IStargateEthVault(stargateEthVault).approve(address(stargateRouter), _amountLD);
+        IStargateEthVault(stargateEthVault).deposit{value: _amount}();
+        IStargateEthVault(stargateEthVault).approve(address(stargateRouter), _amount);
 
         bytes memory data = abi.encode(msg.sender, commands, inputs, _nft, _tokenId);
 
