@@ -6,6 +6,7 @@ import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IStargateRouter.sol";
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IStargateEthVault.sol";
 
 
 contract Source is NonblockingLzApp {
@@ -22,6 +23,8 @@ contract Source is NonblockingLzApp {
     uint256 srcPoolId;
     // Pool id of the Destination Chain
     uint256 dstPoolId;
+    // ETH Vault
+    IStargateEthVault public stargateEthVault;
 
     constructor(
         address _lzEndpoint,
@@ -29,13 +32,18 @@ contract Source is NonblockingLzApp {
         address _destination,
         uint16 _dstChainId,
         uint256 _srcPoolId,
-        uint256 _dstPoolId
+        uint256 _dstPoolId,
+        IStargateEthVault _stargateEthVault
     ) NonblockingLzApp(_lzEndpoint) {
+        require(_stargateEthVault != address(0x0), "RouterETH: _stargateEthVault cant be 0x0");
+        require(_stargateRouter != address(0x0), "RouterETH: _stargateRouter cant be 0x0");
+        
         stargateRouter = IStargateRouter(_stargateRouter);
         destination = _destination;
         dstChainId = _dstChainId;
         srcPoolId = _srcPoolId;
-        dstPoolId = _dstPoolId;
+        dstPoolId = _dstPool;
+        stargateEthVault = _stargateEthVault;
     }
 
     /// @param _amount - cost of the NFT
@@ -46,11 +54,15 @@ contract Source is NonblockingLzApp {
     function purchase(uint256 _amount, uint256 _fee, bytes calldata commands, bytes[] calldata inputs, address _nft, uint256 _tokenId) public payable {
         require(_amount > 0, "need _amount > 0");
         require(msg.value == (_amount + _fee), "stargate requires fee to pay crosschain message");
-        
+
+        // wrap the ETH into WETH
+        IStargateEthVault(stargateEthVault).deposit{value: _amountLD}();
+        IStargateEthVault(stargateEthVault).approve(address(stargateRouter), _amountLD);
+
         bytes memory data = abi.encode(msg.sender, commands, inputs, _nft, _tokenId);
 
         // Stargate's Router.swap() function sends the tokens to the destination chain.
-        stargateRouter.swap{value:msg.value}(
+        stargateRouter.swap{value:_fee}(
             dstChainId,                                     // the destination chain id
             srcPoolId,                                      // the source Stargate poolId
             dstPoolId,                                      // the destination Stargate poolId
